@@ -1,0 +1,32 @@
+# TeamSpeak Banner System – systemd Service
+# Datei nach /etc/systemd/system/ts-banner.service kopieren
+#
+# systemctl daemon-reload
+# systemctl enable ts-banner
+# systemctl start ts-banner
+# systemctl status ts-banner
+# journalctl -u ts-banner -f    ← Live-Logs
+
+[Unit]
+Description=TeamSpeak Banner System
+After=network.target
+
+[Service]
+Type=simple
+User=ts-banner
+Group=ts-banner
+WorkingDirectory=/opt/ts-banner
+ExecStart=/usr/bin/node dist/server.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+# Sicherheit
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ts-banner
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

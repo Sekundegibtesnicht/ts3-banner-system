@@ -1,0 +1,48 @@
+{
+  "port": 3200,
+
+  "teamspeak": {
+    "host": "127.0.0.1",
+    "queryPort": 10011,
+    "serverPort": 9987,
+    "username": "serveradmin",
+    "password": "CHANGE_ME"
+  },
+
+  "banner": {
+    "width": 1024,
+    "height": 300,
+    "background": "assets/background.png",
+    "font": "",
+    "logo": "",
+    "timezone": "Europe/Berlin",
+
+    "colors": {
+      "primary": "#ffffff",
+      "secondary": "#8b949e",
+      "accent": "#00b4d8",
+      "accentSecondary": "#7c3aed",
+      "online": "#34d399",
+      "away": "#fbbf24",
+      "cardBg": "rgba(255, 255, 255, 0.05)",
+      "cardBorder": "rgba(255, 255, 255, 0.08)"
+    },
+
+    "features": {
+      "clock": true,
+      "userChips": true,
+      "progressBar": true,
+      "sparkline": true,
+      "topChannel": true,
+      "lastJoined": true,
+      "particles": true,
+      "accentGlow": true,
+      "gradientLine": true,
+      "eventText": ""
+    }
+  },
+
+  "lang": "de",
+
+  "cacheTTL": 30
+}
