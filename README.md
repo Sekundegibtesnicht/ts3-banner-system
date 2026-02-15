@@ -1,9 +1,25 @@
-# TeamSpeak Banner System
+# TBS – TeamSpeak Banner System
+
+> by **Greenbox Studio**
 
 Dynamisches TeamSpeak Server-Banner System mit TypeScript, Express & Canvas.  
 Generiert live ein PNG-Bannerbild mit Serverdaten – perfekt für nginx.
 
 ![Banner Preview](https://img.shields.io/badge/Version-1.0.0-blue) ![Node](https://img.shields.io/badge/Node.js-18%2B-green) ![License](https://img.shields.io/badge/License-ISC-lightgrey)
+
+## Installation (1 Befehl)
+
+```bash
+bash <(curl -s https://raw.githubusercontent.com/Sekundegibtesnicht/ts3-banner-system/main/install.sh)
+```
+
+Oder manuell:
+
+```bash
+git clone https://github.com/Sekundegibtesnicht/ts3-banner-system.git
+cd ts3-banner-system
+sudo ./install.sh
+```
 
 ## Features
 
@@ -15,6 +31,7 @@ Generiert live ein PNG-Bannerbild mit Serverdaten – perfekt für nginx.
 - **nginx-ready** – Konfiguration & systemd Service inklusive
 - **Multi-Language** – Deutsch & Englisch (erweiterbar)
 - **Konfigurierbar** – Alle Features einzeln ein/ausschaltbar
+- **Git-basiert** – Updates per `git pull` oder einfach Installer erneut ausführen
 
 ### Banner-Features (einzeln konfigurierbar)
 
@@ -32,17 +49,12 @@ Generiert live ein PNG-Bannerbild mit Serverdaten – perfekt für nginx.
 | Event Text | Farbiger Badge mit Event-Text |
 | Logo | Hintergrund-Watermark (eigenes Bild) |
 
-## Schnellstart
+## Schnellstart (lokal / Development)
 
 ```bash
-# Repository klonen
-git clone https://github.com/DEIN_USER/teamspeak-banner.git
-cd teamspeak-banner
-
-# Dependencies installieren
+git clone https://github.com/Sekundegibtesnicht/ts3-banner-system.git
+cd ts3-banner-system
 npm install
-
-# Config erstellen & anpassen
 cp config.example.json config.json
 nano config.json   # TeamSpeak-Daten eintragen!
 
@@ -123,29 +135,37 @@ Alle Einstellungen in `config.json` (siehe `config.example.json`):
 
 ## Linux Server Deployment
 
+**Schnellinstallation (1 Befehl):**
+
 ```bash
-# Auf dem Server:
-chmod +x install.sh
-sudo ./install.sh
-
-# Config anpassen
-sudo nano /opt/ts-banner/config.json
-
-# Service starten
-sudo systemctl start ts-banner
-sudo systemctl status ts-banner
-
-# Logs
-journalctl -u ts-banner -f
+bash <(curl -s https://raw.githubusercontent.com/Sekundegibtesnicht/ts3-banner-system/main/install.sh)
 ```
 
-### nginx einrichten
+Der Installer fragt interaktiv nach Sprache, TS3-Daten und richtet alles automatisch ein: 
+git clone → npm install → TypeScript build → systemd Service → optional nginx.
+
+**Manuell:**
 
 ```bash
-sudo cp nginx.conf /etc/nginx/sites-available/ts-banner
-sudo ln -s /etc/nginx/sites-available/ts-banner /etc/nginx/sites-enabled/
-# server_name in der Datei anpassen!
-sudo nginx -t && sudo systemctl reload nginx
+git clone https://github.com/Sekundegibtesnicht/ts3-banner-system.git /opt/ts-banner
+cd /opt/ts-banner
+sudo ./install.sh
+```
+
+**Update:**
+
+```bash
+# Einfach Installer erneut ausführen – er macht automatisch git pull
+bash <(curl -s https://raw.githubusercontent.com/Sekundegibtesnicht/ts3-banner-system/main/install.sh)
+```
+
+**Nützliche Befehle:**
+
+```bash
+systemctl status ts-banner      # Status
+journalctl -u ts-banner -f       # Logs
+systemctl restart ts-banner      # Neustart
+nano /opt/ts-banner/config.json  # Config bearbeiten
 ```
 
 ## Eigene Sprache hinzufügen
@@ -196,4 +216,4 @@ Dann in `config.json`: `"lang": "fr"`
 
 ## License
 
-ISC
+ISC – Greenbox Studio
