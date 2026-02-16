@@ -167,13 +167,38 @@ sudo ./install.sh
 bash <(curl -s https://raw.githubusercontent.com/Sekundegibtesnicht/ts3-banner-system/main/install.sh)
 ```
 
-**Useful commands:**
+### Install Location
+
+TBS is installed to `/opt/ts-banner/`. The config file is at `/opt/ts-banner/config.json`.
+
+### Restart after Config Changes
+
+After editing `config.json`, restart the service to apply changes:
 
 ```bash
-systemctl status ts-banner      # Status
-journalctl -u ts-banner -f       # Logs
-systemctl restart ts-banner      # Restart
-nano /opt/ts-banner/config.json  # Edit config
+nano /opt/ts-banner/config.json      # Edit config
+sudo systemctl restart ts-banner     # Apply changes
+```
+
+### Autostart
+
+During installation, the installer asks whether TBS should start on boot.  
+You can change this anytime:
+
+```bash
+sudo systemctl enable ts-banner      # Enable autostart
+sudo systemctl disable ts-banner     # Disable autostart
+```
+
+### Useful Commands
+
+```bash
+systemctl status ts-banner           # Status
+journalctl -u ts-banner -f           # Live logs
+sudo systemctl restart ts-banner     # Restart
+sudo systemctl stop ts-banner        # Stop
+sudo systemctl start ts-banner       # Start
+nano /opt/ts-banner/config.json      # Edit config
 ```
 
 ## Adding a Language

@@ -56,6 +56,9 @@ DE[nginx_fail]="nginx Konfigurationstest fehlgeschlagen.\nBitte manuell prüfen.
 DE[nginx_skip]="nginx wird übersprungen."
 DE[nginx_installing]="nginx wird installiert..."
 DE[nginx_installed]="nginx wurde installiert."
+DE[autostart_text]="Soll TBS beim Systemstart automatisch starten?"
+DE[autostart_enabled]="Autostart wurde aktiviert.\nTBS startet automatisch beim Booten."
+DE[autostart_disabled]="Autostart wurde nicht aktiviert.\nManuell starten mit:\n\nsudo systemctl start $SERVICE_NAME"
 DE[done_title]="Installation abgeschlossen!"
 DE[done_text]="\n✓ TBS wurde erfolgreich installiert!\n\nInstalliert in:  $INSTALL_DIR\nBanner URL:      http://localhost:PORT/banner.png\nService:         systemctl status $SERVICE_NAME\n\nNützliche Befehle:\n  systemctl status  $SERVICE_NAME\n  journalctl -u $SERVICE_NAME -f\n  systemctl restart $SERVICE_NAME\n  nano $INSTALL_DIR/config.json\n\nZum Updaten dieses Script erneut ausführen."
 
@@ -92,6 +95,9 @@ EN[nginx_fail]="nginx config test failed.\nPlease check manually."
 EN[nginx_skip]="nginx skipped."
 EN[nginx_installing]="Installing nginx..."
 EN[nginx_installed]="nginx was installed."
+EN[autostart_text]="Should TBS start automatically on system boot?"
+EN[autostart_enabled]="Autostart has been enabled.\nTBS will start automatically on boot."
+EN[autostart_disabled]="Autostart was not enabled.\nStart manually with:\n\nsudo systemctl start $SERVICE_NAME"
 EN[done_title]="Installation Complete!"
 EN[done_text]="\n✓ TBS was installed successfully!\n\nInstalled to:    $INSTALL_DIR\nBanner URL:      http://localhost:PORT/banner.png\nService:         systemctl status $SERVICE_NAME\n\nUseful commands:\n  systemctl status  $SERVICE_NAME\n  journalctl -u $SERVICE_NAME -f\n  systemctl restart $SERVICE_NAME\n  nano $INSTALL_DIR/config.json\n\nTo update, run this script again."
 
@@ -234,7 +240,6 @@ WantedBy=multi-user.target
 SERVICEEOF
 
         systemctl daemon-reload
-        systemctl enable "$SERVICE_NAME" >> "$LOG_FILE" 2>&1
         systemctl start "$SERVICE_NAME" >> "$LOG_FILE" 2>&1 || true
 
         wt_gauge 100 "✓ Done!"
@@ -389,6 +394,20 @@ NGINXEOF
 
 
 # ═══════════════════════════════════════════════════
+#  AUTOSTART DIALOG
+# ═══════════════════════════════════════════════════
+
+do_autostart() {
+    if wt_yesno "$(t autostart_text)"; then
+        systemctl enable "$SERVICE_NAME" >> "$LOG_FILE" 2>&1
+        wt_msg "$(t autostart_enabled)"
+    else
+        systemctl disable "$SERVICE_NAME" >> "$LOG_FILE" 2>&1 || true
+        wt_msg "$(t autostart_disabled)"
+    fi
+}
+
+# ═══════════════════════════════════════════════════
 #  DONE DIALOG
 # ═══════════════════════════════════════════════════
 
@@ -445,6 +464,9 @@ do_configure
 
 # ── nginx ──
 do_nginx
+
+# ── Autostart ──
+do_autostart
 
 # ── Done ──
 do_done
