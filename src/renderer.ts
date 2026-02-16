@@ -397,31 +397,8 @@ export async function renderBanner(): Promise<Buffer> {
 
   cursorY += 50;
 
-  // ─── 5. Event Text Badge ───
-  if (features.eventText && features.eventText.length > 0) {
-    const evtText = features.eventText;
-    ctx.font = `bold 12px "${F}"`;
-    const evtW = ctx.measureText(evtText).width + 20;
-    const evtH = 22;
-    const evtX = nameX;
-    const evtY = cursorY - 6;
-
-    // Badge BG
-    const badgeGrad = ctx.createLinearGradient(evtX, evtY, evtX + evtW, evtY);
-    badgeGrad.addColorStop(0, colors.accentSecondary);
-    badgeGrad.addColorStop(1, colors.accent);
-    roundRect(ctx, evtX, evtY, evtW, evtH, 4);
-    ctx.fillStyle = badgeGrad;
-    ctx.fill();
-
-    // Badge Text
-    ctx.fillStyle = "#ffffff";
-    ctx.font = `bold 11px "${F}"`;
-    ctx.textAlign = "left";
-    ctx.fillText(evtText, evtX + 10, evtY + 15);
-
-    cursorY += 22;
-  }
+  // ─── 5. Event Text Badge (moved to bottom) ───
+  // (rendered later, after all other elements)
 
   // ─── 6. Stat Cards ───
   const cardW = 120;
@@ -569,6 +546,28 @@ export async function renderBanner(): Promise<Buffer> {
     drawSparkline(ctx, sparkX, sparkY, sparkW, sparkH, historyData, historyMax, colors);
 
     rightCursorY += sparkH + 14;
+  }
+
+  // ─── Event Text Badge (bottom bar) ───
+  if (features.eventText && features.eventText.length > 0) {
+    const evtText = features.eventText;
+    const evtH = 28;
+    const evtY = H - evtH - (features.gradientLine ? 4 : 0);
+
+    // Full-width gradient bar
+    const badgeGrad = ctx.createLinearGradient(0, evtY, W, evtY);
+    badgeGrad.addColorStop(0, hexToRgba(colors.accentSecondary, 0.85));
+    badgeGrad.addColorStop(0.5, hexToRgba(colors.accent, 0.7));
+    badgeGrad.addColorStop(1, hexToRgba(colors.accentSecondary, 0.4));
+    ctx.fillStyle = badgeGrad;
+    ctx.fillRect(0, evtY, W, evtH);
+
+    // Text centered
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold 13px "${F}"`;
+    ctx.textAlign = "center";
+    ctx.fillText(evtText, W / 2, evtY + 18);
+    ctx.textAlign = "left";
   }
 
   // ─── 12. Gradient Accent Line am unteren Rand ───
