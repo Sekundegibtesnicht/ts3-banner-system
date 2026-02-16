@@ -21,6 +21,14 @@ cd ts3-banner-system
 sudo ./install.sh
 ```
 
+Der Installer hat ein **interaktives TUI** mit:
+- ASCII-Art Header, Fortschrittsbalken & Spinner-Animationen
+- Schritt-für-Schritt Anzeige `[3/8] Install Node.js`
+- Sprachauswahl (🇩🇪 Deutsch / 🇬🇧 English) beim Start
+- Interaktive Konfiguration der TS3-Zugangsdaten
+- Automatisches systemd Service Setup & optional nginx
+- Update: einfach denselben Befehl erneut ausführen (`git pull`)
+
 ## Features
 
 - **Live Banner** – Dynamisch generiertes PNG unter `/banner.png`
@@ -32,6 +40,7 @@ sudo ./install.sh
 - **Multi-Language** – Deutsch & Englisch (erweiterbar)
 - **Konfigurierbar** – Alle Features einzeln ein/ausschaltbar
 - **Git-basiert** – Updates per `git pull` oder einfach Installer erneut ausführen
+- **TUI Installer** – Fortschrittsbalken, Spinner, farbige Status-Icons
 
 ### Banner-Features (einzeln konfigurierbar)
 
