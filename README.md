@@ -2,18 +2,18 @@
 
 > by **Greenbox Studio**
 
-Dynamisches TeamSpeak Server-Banner System mit TypeScript, Express & Canvas.  
-Generiert live ein PNG-Bannerbild mit Serverdaten – perfekt für nginx.
+Dynamic TeamSpeak server banner system built with TypeScript, Express & Canvas.  
+Generates a live PNG banner image with server data – perfect for nginx.
 
-![Banner Preview](https://img.shields.io/badge/Version-1.0.0-blue) ![Node](https://img.shields.io/badge/Node.js-18%2B-green) ![License](https://img.shields.io/badge/License-ISC-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.0.0-blue) ![Node](https://img.shields.io/badge/Node.js-18%2B-green) ![License](https://img.shields.io/badge/License-ISC-lightgrey)
 
-## Installation (1 Befehl)
+## Installation (1 command)
 
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/Sekundegibtesnicht/ts3-banner-system/main/install.sh)
 ```
 
-Oder manuell:
+Or manually:
 
 ```bash
 git clone https://github.com/Sekundegibtesnicht/ts3-banner-system.git
@@ -21,53 +21,52 @@ cd ts3-banner-system
 sudo ./install.sh
 ```
 
-Der Installer hat ein **interaktives TUI** mit:
-- ASCII-Art Header, Fortschrittsbalken & Spinner-Animationen
-- Schritt-für-Schritt Anzeige `[3/8] Install Node.js`
-- Sprachauswahl (🇩🇪 Deutsch / 🇬🇧 English) beim Start
-- Interaktive Konfiguration der TS3-Zugangsdaten
-- Automatisches systemd Service Setup & optional nginx
-- Update: einfach denselben Befehl erneut ausführen (`git pull`)
+The installer features a **graphical UI** (whiptail) with:
+- Language selection (🇩🇪 German / 🇬🇧 English)
+- Progress bar with live step tracking
+- Interactive forms for TS3 credentials
+- Automatic systemd service setup & optional nginx
+- Update support – just run the same command again (`git pull`)
 
 ## Features
 
-- **Live Banner** – Dynamisch generiertes PNG unter `/banner.png`
-- **ServerQuery** – Automatische Verbindung zum TeamSpeak mit Reconnect
-- **Caching** – Konfigurierbares TTL für Performance
-- **JSON API** – Server-Info, Client-Liste, Channel-Liste
-- **Vorschau** – Eingebaute Web-Vorschau mit Auto-Refresh
-- **nginx-ready** – Konfiguration & systemd Service inklusive
-- **Multi-Language** – Deutsch & Englisch (erweiterbar)
-- **Konfigurierbar** – Alle Features einzeln ein/ausschaltbar
-- **Git-basiert** – Updates per `git pull` oder einfach Installer erneut ausführen
-- **TUI Installer** – Fortschrittsbalken, Spinner, farbige Status-Icons
+- **Live Banner** – Dynamically rendered PNG at `/banner.png`
+- **ServerQuery** – Auto-connecting TeamSpeak client with reconnect
+- **Caching** – Configurable TTL for performance
+- **JSON API** – Server info, client list, channel list
+- **Preview** – Built-in web preview with auto-refresh
+- **nginx-ready** – Config & systemd service included
+- **Multi-Language** – German & English (extensible)
+- **Configurable** – All features individually toggleable
+- **Git-based** – Update via `git pull` or re-run installer
+- **GUI Installer** – whiptail-based graphical dialogs & progress bar
 
-### Banner-Features (einzeln konfigurierbar)
+### Banner Features (individually configurable)
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| Clock | Uhrzeit + Datum mit konfigurierbarer Zeitzone |
-| User Chips | Online-Spieler als Chips mit Status-Punkt |
-| Progress Bar | Visueller Balken für Spielerauslastung |
-| Sparkline | Mini-Graph der Online-History |
-| Top Channel | Meistbesuchter Channel |
-| Last Joined | Zuletzt beigetretener Spieler |
-| Particles | Dekorative Sterne im Hintergrund |
-| Accent Glow | Leuchteffekt hinter Cards |
-| Gradient Line | Farbverlauf am unteren Rand |
-| Event Text | Farbiger Badge mit Event-Text |
-| Logo | Hintergrund-Watermark (eigenes Bild) |
+| Clock | Time & date with configurable timezone |
+| User Chips | Online players as chips with status dot |
+| Progress Bar | Visual bar for player capacity |
+| Sparkline | Mini graph of online history |
+| Top Channel | Most populated channel |
+| Last Joined | Last player who connected |
+| Particles | Decorative stars in the background |
+| Accent Glow | Glow effect behind cards |
+| Gradient Line | Color gradient at the bottom |
+| Event Text | Colored badge with event text |
+| Logo | Background watermark (custom image) |
 
-## Schnellstart (lokal / Development)
+## Quick Start (local / Development)
 
 ```bash
 git clone https://github.com/Sekundegibtesnicht/ts3-banner-system.git
 cd ts3-banner-system
 npm install
 cp config.example.json config.json
-nano config.json   # TeamSpeak-Daten eintragen!
+nano config.json   # Enter your TeamSpeak credentials!
 
-# Development (mit auto-reload)
+# Development (with auto-reload)
 npm run dev
 
 # Production
@@ -75,55 +74,55 @@ npm run build
 npm start
 ```
 
-Das Banner ist dann erreichbar unter: `http://localhost:3200/banner.png`
+Banner available at: `http://localhost:3200/banner.png`
 
 ## Endpoints
 
-| Endpoint | Beschreibung |
+| Endpoint | Description |
 |----------|-------------|
-| `/banner.png` | Banner als PNG-Bild |
-| `/api/info` | Server-Infos (JSON) |
-| `/api/clients` | Online-Clients (JSON) |
-| `/api/channels` | Channel-Liste (JSON) |
-| `/health` | Health-Check |
-| `/` | Web-Vorschau mit Auto-Refresh |
+| `/banner.png` | Banner as PNG image |
+| `/api/info` | Server info (JSON) |
+| `/api/clients` | Online clients (JSON) |
+| `/api/channels` | Channel list (JSON) |
+| `/health` | Health check |
+| `/` | Web preview with auto-refresh |
 
-## Konfiguration
+## Configuration
 
-Alle Einstellungen in `config.json` (siehe `config.example.json`):
+All settings in `config.json` (see `config.example.json`):
 
 ```jsonc
 {
-  "port": 3200,                    // Server-Port
+  "port": 3200,                    // Server port
 
   "teamspeak": {
-    "host": "127.0.0.1",           // TS3 Server IP
-    "queryPort": 10011,            // ServerQuery Port
-    "serverPort": 9987,            // TS3 Server Port
+    "host": "127.0.0.1",           // TS3 server IP
+    "queryPort": 10011,            // ServerQuery port
+    "serverPort": 9987,            // TS3 server port
     "username": "serveradmin",
     "password": "CHANGE_ME"
   },
 
   "banner": {
-    "width": 1024,                 // Banner-Breite (px)
-    "height": 300,                 // Banner-Höhe (px)
+    "width": 1024,                 // Banner width (px)
+    "height": 300,                 // Banner height (px)
     "background": "assets/background.png",
-    "font": "",                    // Pfad zu .ttf (leer = System-Font)
-    "logo": "",                    // Pfad zu Logo-Bild (Watermark)
+    "font": "",                    // Path to .ttf (empty = system font)
+    "logo": "",                    // Path to logo image (watermark)
     "timezone": "Europe/Berlin",
 
     "colors": {
       "primary": "#ffffff",
       "secondary": "#8b949e",
-      "accent": "#00b4d8",         // Hauptakzentfarbe
+      "accent": "#00b4d8",         // Main accent color
       "accentSecondary": "#7c3aed",
-      "online": "#34d399",         // Online-Status
-      "away": "#fbbf24",           // Away-Status
+      "online": "#34d399",         // Online status
+      "away": "#fbbf24",           // Away status
       "cardBg": "rgba(255, 255, 255, 0.05)",
       "cardBorder": "rgba(255, 255, 255, 0.08)"
     },
 
-    "features": {                  // Einzeln ein/ausschaltbar
+    "features": {                  // Toggle individually
       "clock": true,
       "userChips": true,
       "progressBar": true,
@@ -133,27 +132,27 @@ Alle Einstellungen in `config.json` (siehe `config.example.json`):
       "particles": true,
       "accentGlow": true,
       "gradientLine": true,
-      "eventText": ""              // Leer = deaktiviert
+      "eventText": ""              // Empty = disabled
     }
   },
 
-  "lang": "de",                   // "de" oder "en"
-  "cacheTTL": 30                   // Cache in Sekunden
+  "lang": "de",                   // "de" or "en"
+  "cacheTTL": 30                   // Cache in seconds
 }
 ```
 
 ## Linux Server Deployment
 
-**Schnellinstallation (1 Befehl):**
+**Quick install (1 command):**
 
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/Sekundegibtesnicht/ts3-banner-system/main/install.sh)
 ```
 
-Der Installer fragt interaktiv nach Sprache, TS3-Daten und richtet alles automatisch ein: 
-git clone → npm install → TypeScript build → systemd Service → optional nginx.
+The installer guides you through language, TS3 credentials and sets everything up automatically:  
+git clone → npm install → TypeScript build → systemd service → optional nginx.
 
-**Manuell:**
+**Manual:**
 
 ```bash
 git clone https://github.com/Sekundegibtesnicht/ts3-banner-system.git /opt/ts-banner
@@ -164,64 +163,64 @@ sudo ./install.sh
 **Update:**
 
 ```bash
-# Einfach Installer erneut ausführen – er macht automatisch git pull
+# Just re-run the installer – it automatically does git pull
 bash <(curl -s https://raw.githubusercontent.com/Sekundegibtesnicht/ts3-banner-system/main/install.sh)
 ```
 
-**Nützliche Befehle:**
+**Useful commands:**
 
 ```bash
 systemctl status ts-banner      # Status
 journalctl -u ts-banner -f       # Logs
-systemctl restart ts-banner      # Neustart
-nano /opt/ts-banner/config.json  # Config bearbeiten
+systemctl restart ts-banner      # Restart
+nano /opt/ts-banner/config.json  # Edit config
 ```
 
-## Eigene Sprache hinzufügen
+## Adding a Language
 
-In `src/i18n.ts` ein neues Sprach-Objekt anlegen:
+Add a new language object in `src/i18n.ts`:
 
 ```typescript
 const fr: I18nStrings = {
   dateLocale: "fr-FR",
   online: "EN LIGNE",
   channels: "CANAUX",
-  // ... alle Keys ausfüllen
+  // ... fill in all keys
 };
 
-// In languages registrieren:
+// Register in languages:
 const languages: Record<string, I18nStrings> = { de, en, fr };
 ```
 
-Dann in `config.json`: `"lang": "fr"`
+Then in `config.json`: `"lang": "fr"`
 
-## Projektstruktur
+## Project Structure
 
 ```
 ├── src/
-│   ├── config.ts       # Config laden & typen
-│   ├── i18n.ts         # Sprach-System (de/en)
-│   ├── types.ts        # TypeScript Interfaces
-│   ├── teamspeak.ts    # TS3 ServerQuery Client
-│   ├── history.ts      # Online-History für Sparkline
-│   ├── renderer.ts     # Canvas Banner-Rendering
-│   └── server.ts       # Express HTTP Server
+│   ├── config.ts       # Config loading & types
+│   ├── i18n.ts         # Language system (de/en)
+│   ├── types.ts        # TypeScript interfaces
+│   ├── teamspeak.ts    # TS3 ServerQuery client
+│   ├── history.ts      # Online history for sparkline
+│   ├── renderer.ts     # Canvas banner rendering
+│   └── server.ts       # Express HTTP server
 ├── assets/
-│   └── background.png  # Banner-Hintergrund
-├── config.example.json # Beispiel-Konfiguration
-├── config.json         # Deine Konfiguration (gitignored)
-├── install.sh          # Linux Auto-Installer
-├── nginx.conf          # nginx Reverse Proxy Config
-├── ts-banner.service   # systemd Service
+│   └── background.png  # Banner background
+├── config.example.json # Example configuration
+├── config.json         # Your configuration (gitignored)
+├── install.sh          # Linux GUI installer
+├── nginx.conf          # nginx reverse proxy config
+├── ts-banner.service   # systemd service
 ├── package.json
 └── tsconfig.json
 ```
 
-## Voraussetzungen
+## Requirements
 
 - **Node.js 18+**
-- **TeamSpeak 3 Server** mit aktiviertem ServerQuery
-- Für `canvas`: Build-Tools (`build-essential`, `libcairo2-dev`, etc. – werden von `install.sh` automatisch installiert)
+- **TeamSpeak 3 Server** with ServerQuery enabled
+- For `canvas`: build tools (`build-essential`, `libcairo2-dev`, etc. – installed automatically by `install.sh`)
 
 ## License
 

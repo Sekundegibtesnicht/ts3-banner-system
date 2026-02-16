@@ -1,400 +1,261 @@
 #!/usr/bin/env bash
 
 # ─────────────────────────────────────────────────────
-#  TBS – TeamSpeak Banner System
+#  TBS – TeamSpeak Banner System Installer
 #  by Greenbox Studio
 #  https://github.com/Sekundegibtesnicht/ts3-banner-system
+#
+#  Usage:
+#    bash <(curl -s https://raw.githubusercontent.com/Sekundegibtesnicht/ts3-banner-system/main/install.sh)
+#    or: sudo ./install.sh
 # ─────────────────────────────────────────────────────
 
 set -e
 
-# Colors
-RED='\033[1;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[1;34m'
-CYAN='\033[0;36m'
-MAGENTA='\033[0;35m'
-WHITE='\033[1;37m'
-DIM='\033[2m'
-BOLD='\033[1m'
-NORMAL='\033[0;39m'
+# ═══════════════════════════════════════════════════
+#  CONSTANTS
+# ═══════════════════════════════════════════════════
 
-# Environment
 INSTALL_DIR="/opt/ts-banner"
 SERVICE_NAME="ts-banner"
 USER_NAME="ts-banner"
 REPO_URL="https://github.com/Sekundegibtesnicht/ts3-banner-system.git"
 VERSION="1.0.0"
 BANNER_PORT=3200
-LANG_CODE="en"
-TOTAL_STEPS=8
-CURRENT_STEP=0
+LANG="en"
+WT_WIDTH=72
+WT_HEIGHT=18
+WT_TITLE="TBS Installer v$VERSION – Greenbox Studio"
+LOG_FILE="/tmp/tbs-install.log"
 
 # ═══════════════════════════════════════════════════
 #  i18n
 # ═══════════════════════════════════════════════════
 
 declare -A DE
-DE[root_error]="Du hast nicht genügend Rechte. Bitte mit sudo ausführen."
-DE[select_lang]="Sprache wählen / Select language"
-DE[welcome]="Willkommen beim TeamSpeak Banner System"
-DE[os_found]="System erkannt"
-DE[os_not_found]="Kein unterstütztes System. Nur Ubuntu/Debian."
-DE[node_found]="Node.js gefunden"
-DE[node_installing]="Node.js wird installiert..."
-DE[node_installed]="Node.js installiert"
-DE[git_found]="Git gefunden"
-DE[git_installing]="Git wird installiert..."
-DE[git_installed]="Git installiert"
-DE[deps_installing]="Build-Tools werden installiert..."
-DE[deps_installed]="System-Abhängigkeiten installiert"
-DE[user_exists]="Benutzer existiert bereits"
-DE[user_created]="Benutzer erstellt"
-DE[repo_exists]="Repository existiert. Update wird durchgeführt..."
-DE[repo_updated]="Repository aktualisiert"
-DE[repo_cloning]="Repository wird geklont..."
-DE[repo_cloned]="Repository geklont"
-DE[config_exists]="config.json existiert bereits."
-DE[config_ask]="Jetzt konfigurieren?"
-DE[config_saved]="Konfiguration gespeichert"
-DE[config_later]="Config später anpassen:"
-DE[ts_host]="TeamSpeak Server IP/Hostname"
-DE[ts_query_port]="ServerQuery Port"
-DE[ts_server_port]="TeamSpeak Server Port"
-DE[ts_username]="ServerQuery Benutzername"
-DE[ts_password]="ServerQuery Passwort"
-DE[banner_port]="Banner-System Port"
-DE[npm_installing]="NPM Pakete werden installiert..."
-DE[npm_installed]="NPM Pakete installiert"
-DE[ts_compiling]="TypeScript wird kompiliert..."
-DE[ts_compiled]="Kompilierung erfolgreich"
-DE[ts_compile_fail]="Kompilierung fehlgeschlagen!"
-DE[perms_set]="Berechtigungen gesetzt"
-DE[service_installed]="Service eingerichtet & gestartet"
-DE[nginx_ask]="nginx einrichten?"
-DE[nginx_not_found]="nginx nicht installiert – überspringe"
-DE[nginx_domain]="Domain für das Banner"
-DE[nginx_configured]="nginx konfiguriert"
-DE[nginx_test_fail]="nginx Test fehlgeschlagen."
-DE[complete]="Installation abgeschlossen!"
-DE[installed_to]="Installiert in"
-DE[status]="Service Status"
-DE[url]="Banner URL"
-DE[commands]="Nützliche Befehle"
-DE[update_hint]="Zum Updaten einfach erneut ausführen."
-DE[yes_no]="j/n"
-DE[step_system]="System prüfen"
-DE[step_git]="Git installieren"
-DE[step_node]="Node.js installieren"
-DE[step_deps]="Abhängigkeiten"
-DE[step_repo]="Repository"
-DE[step_config]="Konfiguration"
-DE[step_build]="Kompilieren"
-DE[step_service]="Service einrichten"
+DE[welcome_title]="Willkommen"
+DE[welcome_text]="\nWillkommen beim TBS Installer!\n\nTeamSpeak Banner System v$VERSION\nby Greenbox Studio\n\nDer Installer richtet alles automatisch ein:\n  • Node.js & Git\n  • System-Abhängigkeiten\n  • Repository klonen / updaten\n  • TypeScript kompilieren\n  • systemd Service\n  • nginx (optional)"
+DE[root_error]="Bitte als root ausführen:\n\nsudo ./install.sh\n\noder:\n\nbash <(curl -s ...)"
+DE[os_error]="Kein unterstütztes Betriebssystem erkannt.\nNur Ubuntu/Debian werden unterstützt."
+DE[config_title]="Konfiguration"
+DE[config_text]="Möchtest du jetzt die TeamSpeak-Daten eingeben?"
+DE[ts_host]="TeamSpeak Server IP/Hostname:"
+DE[ts_query_port]="ServerQuery Port:"
+DE[ts_server_port]="TeamSpeak Server Port:"
+DE[ts_username]="ServerQuery Benutzername:"
+DE[ts_password]="ServerQuery Passwort:"
+DE[banner_port]="Banner HTTP Port:"
+DE[config_saved]="Konfiguration gespeichert!"
+DE[config_skip]="config.example.json wurde als config.json kopiert.\nBitte später anpassen:\n\nnano $INSTALL_DIR/config.json"
+DE[config_exists]="config.json existiert bereits und wird beibehalten."
+DE[nginx_title]="nginx"
+DE[nginx_text]="Möchtest du nginx als Reverse Proxy einrichten?"
+DE[nginx_domain]="Deine Domain für das Banner:"
+DE[nginx_done]="nginx wurde konfiguriert für:"
+DE[nginx_fail]="nginx Konfigurationstest fehlgeschlagen.\nBitte manuell prüfen."
+DE[nginx_skip]="nginx ist nicht installiert. Überspringe."
+DE[done_title]="Installation abgeschlossen!"
+DE[done_text]="\n✓ TBS wurde erfolgreich installiert!\n\nInstalliert in:  $INSTALL_DIR\nBanner URL:      http://localhost:PORT/banner.png\nService:         systemctl status $SERVICE_NAME\n\nNützliche Befehle:\n  systemctl status  $SERVICE_NAME\n  journalctl -u $SERVICE_NAME -f\n  systemctl restart $SERVICE_NAME\n  nano $INSTALL_DIR/config.json\n\nZum Updaten dieses Script erneut ausführen."
+
+DE[step_git]="Git installieren..."
+DE[step_node]="Node.js installieren..."
+DE[step_deps]="Build-Tools installieren..."
+DE[step_user]="System-Benutzer anlegen..."
+DE[step_repo]="Repository klonen/updaten..."
+DE[step_npm]="NPM Pakete installieren..."
+DE[step_build]="TypeScript kompilieren..."
+DE[step_service]="systemd Service einrichten..."
 
 declare -A EN
-EN[root_error]="Insufficient permissions. Please run with sudo."
-EN[select_lang]="Sprache wählen / Select language"
-EN[welcome]="Welcome to the TeamSpeak Banner System"
-EN[os_found]="System detected"
-EN[os_not_found]="No supported system. Ubuntu/Debian only."
-EN[node_found]="Node.js found"
-EN[node_installing]="Installing Node.js..."
-EN[node_installed]="Node.js installed"
-EN[git_found]="Git found"
-EN[git_installing]="Installing Git..."
-EN[git_installed]="Git installed"
-EN[deps_installing]="Installing build tools..."
-EN[deps_installed]="System dependencies installed"
-EN[user_exists]="User already exists"
-EN[user_created]="User created"
-EN[repo_exists]="Repository exists. Updating..."
-EN[repo_updated]="Repository updated"
-EN[repo_cloning]="Cloning repository..."
-EN[repo_cloned]="Repository cloned"
-EN[config_exists]="config.json already exists."
-EN[config_ask]="Configure now?"
-EN[config_saved]="Configuration saved"
-EN[config_later]="Edit config later:"
-EN[ts_host]="TeamSpeak Server IP/Hostname"
-EN[ts_query_port]="ServerQuery Port"
-EN[ts_server_port]="TeamSpeak Server Port"
-EN[ts_username]="ServerQuery Username"
-EN[ts_password]="ServerQuery Password"
-EN[banner_port]="Banner system port"
-EN[npm_installing]="Installing NPM packages..."
-EN[npm_installed]="NPM packages installed"
-EN[ts_compiling]="Compiling TypeScript..."
-EN[ts_compiled]="Compilation successful"
-EN[ts_compile_fail]="Compilation failed!"
-EN[perms_set]="Permissions set"
-EN[service_installed]="Service set up & started"
-EN[nginx_ask]="Set up nginx?"
-EN[nginx_not_found]="nginx not installed – skipping"
-EN[nginx_domain]="Domain for the banner"
-EN[nginx_configured]="nginx configured"
-EN[nginx_test_fail]="nginx test failed."
-EN[complete]="Installation complete!"
-EN[installed_to]="Installed to"
-EN[status]="Service status"
-EN[url]="Banner URL"
-EN[commands]="Useful commands"
-EN[update_hint]="To update, simply run this script again."
-EN[yes_no]="y/n"
-EN[step_system]="Check system"
-EN[step_git]="Install Git"
-EN[step_node]="Install Node.js"
-EN[step_deps]="Dependencies"
-EN[step_repo]="Repository"
-EN[step_config]="Configuration"
-EN[step_build]="Compile"
-EN[step_service]="Setup service"
+EN[welcome_title]="Welcome"
+EN[welcome_text]="\nWelcome to the TBS Installer!\n\nTeamSpeak Banner System v$VERSION\nby Greenbox Studio\n\nThe installer sets up everything automatically:\n  • Node.js & Git\n  • System dependencies\n  • Clone / update repository\n  • Compile TypeScript\n  • systemd service\n  • nginx (optional)"
+EN[root_error]="Please run as root:\n\nsudo ./install.sh\n\nor:\n\nbash <(curl -s ...)"
+EN[os_error]="No supported OS detected.\nOnly Ubuntu/Debian are supported."
+EN[config_title]="Configuration"
+EN[config_text]="Do you want to enter TeamSpeak credentials now?"
+EN[ts_host]="TeamSpeak Server IP/Hostname:"
+EN[ts_query_port]="ServerQuery Port:"
+EN[ts_server_port]="TeamSpeak Server Port:"
+EN[ts_username]="ServerQuery Username:"
+EN[ts_password]="ServerQuery Password:"
+EN[banner_port]="Banner HTTP Port:"
+EN[config_saved]="Configuration saved!"
+EN[config_skip]="config.example.json was copied as config.json.\nPlease edit it later:\n\nnano $INSTALL_DIR/config.json"
+EN[config_exists]="config.json already exists and will be kept."
+EN[nginx_title]="nginx"
+EN[nginx_text]="Do you want to set up nginx as a reverse proxy?"
+EN[nginx_domain]="Your domain for the banner:"
+EN[nginx_done]="nginx was configured for:"
+EN[nginx_fail]="nginx config test failed.\nPlease check manually."
+EN[nginx_skip]="nginx is not installed. Skipping."
+EN[done_title]="Installation Complete!"
+EN[done_text]="\n✓ TBS was installed successfully!\n\nInstalled to:    $INSTALL_DIR\nBanner URL:      http://localhost:PORT/banner.png\nService:         systemctl status $SERVICE_NAME\n\nUseful commands:\n  systemctl status  $SERVICE_NAME\n  journalctl -u $SERVICE_NAME -f\n  systemctl restart $SERVICE_NAME\n  nano $INSTALL_DIR/config.json\n\nTo update, run this script again."
+
+EN[step_git]="Installing Git..."
+EN[step_node]="Installing Node.js..."
+EN[step_deps]="Installing build tools..."
+EN[step_user]="Creating system user..."
+EN[step_repo]="Cloning/updating repository..."
+EN[step_npm]="Installing NPM packages..."
+EN[step_build]="Compiling TypeScript..."
+EN[step_service]="Setting up systemd service..."
 
 t() {
-    if [ "$LANG_CODE" = "de" ]; then echo "${DE[$1]}"; else echo "${EN[$1]}"; fi
+    if [ "$LANG" = "de" ]; then echo "${DE[$1]}"; else echo "${EN[$1]}"; fi
 }
 
 # ═══════════════════════════════════════════════════
-#  TUI COMPONENTS
+#  HELPERS
 # ═══════════════════════════════════════════════════
 
-send_success() { echo -e "  $GREEN✓$NORMAL $1"; }
-send_info()    { echo -e "  ${BLUE}ℹ$NORMAL  $1"; }
-send_warn()    { echo -e "  $YELLOW⚠$NORMAL $1"; }
-send_error()   { echo -e "  $RED✗$NORMAL $1"; exit 1; }
-
-send_ask() {
-    echo -en "  $MAGENTA?$NORMAL $1 "
+ensure_whiptail() {
+    if ! command -v whiptail &> /dev/null; then
+        echo "Installing whiptail..."
+        apt-get update -qq > /dev/null 2>&1
+        apt-get install -y whiptail > /dev/null 2>&1
+    fi
 }
 
-# ── Progress Bar ──
-
-progress_bar() {
-    local current=$1
-    local total=$2
-    local width=30
-    local pct=$((current * 100 / total))
-    local filled=$((current * width / total))
-    local empty=$((width - filled))
-
-    local bar=""
-    for ((i=0; i<filled; i++)); do bar+="█"; done
-    for ((i=0; i<empty; i++)); do bar+="░"; done
-
-    echo -e "  ${DIM}[$NORMAL${CYAN}${bar}${NORMAL}${DIM}]$NORMAL ${BOLD}${pct}%%$NORMAL"
+wt_msg() {
+    whiptail --title "$WT_TITLE" --msgbox "$1" $WT_HEIGHT $WT_WIDTH
 }
 
-# ── Spinner ──
+wt_yesno() {
+    whiptail --title "$WT_TITLE" --yesno "$1" $WT_HEIGHT $WT_WIDTH
+}
 
-spinner() {
-    local pid=$1
+wt_input() {
+    local prompt=$1
+    local default=$2
+    whiptail --title "$WT_TITLE" --inputbox "$prompt" $WT_HEIGHT $WT_WIDTH "$default" 3>&1 1>&2 2>&3
+}
+
+wt_password() {
+    local prompt=$1
+    whiptail --title "$WT_TITLE" --passwordbox "$prompt" $WT_HEIGHT $WT_WIDTH 3>&1 1>&2 2>&3
+}
+
+wt_gauge() {
+    local pct=$1
     local msg=$2
-    local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
-    local i=0
-
-    tput civis 2>/dev/null || true  # hide cursor
-    while kill -0 "$pid" 2>/dev/null; do
-        printf "\r  ${CYAN}${frames[i++ % ${#frames[@]}]}$NORMAL %s" "$msg"
-        sleep 0.08
-    done
-    printf "\r  \033[2K"
-    tput cnorm 2>/dev/null || true  # show cursor
+    echo -e "XXX\n$pct\n$msg\nXXX"
 }
 
-# ── Step Header ──
-
-step_header() {
-    CURRENT_STEP=$1
-    local title=$2
-    echo ""
-    echo -e "  ${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$NORMAL"
-    echo -e "  ${WHITE}[$CURRENT_STEP/$TOTAL_STEPS]$NORMAL  ${BOLD}$title$NORMAL"
-    echo -e "  ${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$NORMAL"
-}
-
-# ── Separator ──
-
-separator() {
-    echo -e "  ${DIM}──────────────────────────────────────────────$NORMAL"
-}
-
-# ── Header ──
-
-show_header() {
-    echo ""
-    echo -e "$CYAN"
-    cat << 'EOF'
-    ████████╗██████╗ ███████╗
-       ██╔══╝██╔══██╗██╔════╝
-       ██║   ██████╔╝███████╗
-       ██║   ██╔══██╗╚════██║
-       ██║   ██████╔╝███████║
-       ╚═╝   ╚═════╝ ╚══════╝
-EOF
-    echo -e "$NORMAL"
-    echo -e "    ${BOLD}TeamSpeak Banner System$NORMAL ${DIM}v$VERSION$NORMAL"
-    echo -e "    ${DIM}by Greenbox Studio$NORMAL"
-    echo ""
-    separator
-    echo ""
+run_step() {
+    local cmd=$1
+    eval "$cmd" >> "$LOG_FILE" 2>&1 || true
 }
 
 # ═══════════════════════════════════════════════════
-#  INSTALLER STEPS
+#  MAIN INSTALLATION
 # ═══════════════════════════════════════════════════
 
-select_language() {
-    echo -e "    ${DIM}$(t select_lang)$NORMAL"
-    echo ""
-    echo -e "    ${BOLD}1)$NORMAL 🇩🇪  Deutsch"
-    echo -e "    ${BOLD}2)$NORMAL 🇬🇧  English"
-    echo ""
-    send_ask "[1/2]:"
-    read -r lang_choice
-    case "$lang_choice" in
-        1|de|DE) LANG_CODE="de" ;;
-        *) LANG_CODE="en" ;;
-    esac
-    echo ""
-    send_info "$(t welcome) ${DIM}v$VERSION$NORMAL"
-}
+do_install() {
+    {
+        # ── Step 1: Git (12%) ──
+        wt_gauge 0 "$(t step_git)"
+        if ! command -v git &> /dev/null; then
+            apt-get update -qq >> "$LOG_FILE" 2>&1
+            apt-get install -y git >> "$LOG_FILE" 2>&1
+        fi
 
-verify_root() {
-    if [ "$EUID" -ne 0 ]; then
-        send_error "$(t root_error)"
-    fi
-}
+        # ── Step 2: Node.js (25%) ──
+        wt_gauge 12 "$(t step_node)"
+        if ! command -v node &> /dev/null; then
+            curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >> "$LOG_FILE" 2>&1
+            apt-get install -y nodejs >> "$LOG_FILE" 2>&1
+        fi
 
-# ── Step 1: System ──
+        # ── Step 3: Dependencies (38%) ──
+        wt_gauge 25 "$(t step_deps)"
+        apt-get install -y build-essential libcairo2-dev libjpeg-dev libpango1.0-dev \
+            libgif-dev librsvg2-dev pkg-config python3 >> "$LOG_FILE" 2>&1 || true
 
-check_system() {
-    step_header 1 "$(t step_system)"
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        send_success "$(t os_found): ${BLUE}$PRETTY_NAME$NORMAL"
-    else
-        send_error "$(t os_not_found)"
-    fi
-    progress_bar 1 $TOTAL_STEPS
-}
+        # ── Step 4: User (45%) ──
+        wt_gauge 38 "$(t step_user)"
+        if ! id "$USER_NAME" &>/dev/null; then
+            useradd --system --no-create-home --shell /usr/sbin/nologin "$USER_NAME"
+        fi
 
-# ── Step 2: Git ──
+        # ── Step 5: Repository (55%) ──
+        wt_gauge 45 "$(t step_repo)"
+        if [ -d "$INSTALL_DIR/.git" ]; then
+            cd "$INSTALL_DIR"
+            git stash >> "$LOG_FILE" 2>&1 || true
+            git pull origin main >> "$LOG_FILE" 2>&1
+            git stash pop >> "$LOG_FILE" 2>&1 || true
+        else
+            git clone "$REPO_URL" "$INSTALL_DIR" >> "$LOG_FILE" 2>&1
+        fi
 
-install_git() {
-    step_header 2 "$(t step_git)"
-    if command -v git &> /dev/null; then
-        send_success "$(t git_found): ${BLUE}$(git --version | cut -d' ' -f3)$NORMAL"
-    else
-        send_info "$(t git_installing)"
-        apt-get install -y git > /dev/null 2>&1 &
-        spinner $! "$(t git_installing)"
-        wait $!
-        send_success "$(t git_installed)"
-    fi
-    progress_bar 2 $TOTAL_STEPS
-}
-
-# ── Step 3: Node.js ──
-
-install_nodejs() {
-    step_header 3 "$(t step_node)"
-    if command -v node &> /dev/null; then
-        send_success "$(t node_found): ${BLUE}$(node -v)$NORMAL"
-    else
-        send_info "$(t node_installing)"
-        (curl -fsSL https://deb.nodesource.com/setup_20.x | bash - > /dev/null 2>&1 && \
-         apt-get install -y nodejs > /dev/null 2>&1) &
-        spinner $! "$(t node_installing)"
-        wait $!
-        send_success "$(t node_installed): ${BLUE}$(node -v)$NORMAL"
-    fi
-    progress_bar 3 $TOTAL_STEPS
-}
-
-# ── Step 4: Dependencies ──
-
-install_deps() {
-    step_header 4 "$(t step_deps)"
-    send_info "$(t deps_installing)"
-    (apt-get update -qq > /dev/null 2>&1 && \
-     apt-get install -y build-essential libcairo2-dev libjpeg-dev libpango1.0-dev \
-        libgif-dev librsvg2-dev pkg-config python3 > /dev/null 2>&1) &
-    spinner $! "$(t deps_installing)"
-    wait $! || true
-    send_success "$(t deps_installed)"
-    progress_bar 4 $TOTAL_STEPS
-}
-
-# ── Step 5: Repository ──
-
-clone_or_pull() {
-    step_header 5 "$(t step_repo)"
-
-    # Create user
-    if id "$USER_NAME" &>/dev/null; then
-        send_success "$(t user_exists): ${BLUE}$USER_NAME$NORMAL"
-    else
-        useradd --system --no-create-home --shell /usr/sbin/nologin "$USER_NAME"
-        send_success "$(t user_created): ${BLUE}$USER_NAME$NORMAL"
-    fi
-
-    # Clone or pull
-    if [ -d "$INSTALL_DIR/.git" ]; then
-        send_info "$(t repo_exists)"
+        # ── Step 6: NPM Install (70%) ──
+        wt_gauge 55 "$(t step_npm)"
         cd "$INSTALL_DIR"
-        git stash > /dev/null 2>&1 || true
-        git pull origin main > /dev/null 2>&1 &
-        spinner $! "git pull..."
-        wait $!
-        git stash pop > /dev/null 2>&1 || true
-        send_success "$(t repo_updated)"
-    else
-        send_info "$(t repo_cloning)"
-        git clone "$REPO_URL" "$INSTALL_DIR" > /dev/null 2>&1 &
-        spinner $! "git clone..."
-        wait $!
-        send_success "$(t repo_cloned): ${BLUE}$INSTALL_DIR$NORMAL"
-    fi
-    progress_bar 5 $TOTAL_STEPS
+        npm install --omit=dev >> "$LOG_FILE" 2>&1
+
+        # ── Step 7: Build (85%) ──
+        wt_gauge 70 "$(t step_build)"
+        npm install --save-dev typescript >> "$LOG_FILE" 2>&1
+        npx tsc >> "$LOG_FILE" 2>&1 || true
+        npm prune --omit=dev >> "$LOG_FILE" 2>&1 || true
+
+        # ── Step 8: Service (100%) ──
+        wt_gauge 85 "$(t step_service)"
+
+        chown -R "$USER_NAME:$USER_NAME" "$INSTALL_DIR"
+        [ -f "$INSTALL_DIR/config.json" ] && chmod 600 "$INSTALL_DIR/config.json"
+
+        cat > "/etc/systemd/system/${SERVICE_NAME}.service" << SERVICEEOF
+[Unit]
+Description=TeamSpeak Banner System – Greenbox Studio
+After=network.target
+
+[Service]
+Type=simple
+User=$USER_NAME
+Group=$USER_NAME
+WorkingDirectory=$INSTALL_DIR
+ExecStart=/usr/bin/node dist/server.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=$INSTALL_DIR
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+SERVICEEOF
+
+        systemctl daemon-reload
+        systemctl enable "$SERVICE_NAME" >> "$LOG_FILE" 2>&1
+        systemctl start "$SERVICE_NAME" >> "$LOG_FILE" 2>&1 || true
+
+        wt_gauge 100 "✓ Done!"
+        sleep 1
+
+    } | whiptail --title "$WT_TITLE" --gauge "Starting..." 8 $WT_WIDTH 0
 }
 
-# ── Step 6: Configuration ──
+# ═══════════════════════════════════════════════════
+#  CONFIGURATION DIALOG
+# ═══════════════════════════════════════════════════
 
-configure() {
-    step_header 6 "$(t step_config)"
-
+do_configure() {
     if [ -f "$INSTALL_DIR/config.json" ]; then
-        send_warn "$(t config_exists)"
-        progress_bar 6 $TOTAL_STEPS
+        wt_msg "$(t config_exists)"
         return
     fi
 
-    send_ask "$(t config_ask) ${DIM}($(t yes_no))$NORMAL"
-    read -r do_config
-
-    if [[ "$do_config" =~ ^[yYjJ]$ ]]; then
-        echo ""
-
-        send_ask "$(t ts_host) ${DIM}[127.0.0.1]:$NORMAL "
-        read -r TS_HOST; TS_HOST=${TS_HOST:-127.0.0.1}
-
-        send_ask "$(t ts_query_port) ${DIM}[10011]:$NORMAL "
-        read -r TS_QPORT; TS_QPORT=${TS_QPORT:-10011}
-
-        send_ask "$(t ts_server_port) ${DIM}[9987]:$NORMAL "
-        read -r TS_SPORT; TS_SPORT=${TS_SPORT:-9987}
-
-        send_ask "$(t ts_username) ${DIM}[serveradmin]:$NORMAL "
-        read -r TS_USER; TS_USER=${TS_USER:-serveradmin}
-
-        send_ask "$(t ts_password): "
-        read -rs TS_PASS; echo ""
-
-        send_ask "$(t banner_port) ${DIM}[3200]:$NORMAL "
-        read -r BP_INPUT; BANNER_PORT=${BP_INPUT:-3200}
-
-        BANNER_LANG="$LANG_CODE"
+    if wt_yesno "$(t config_text)"; then
+        TS_HOST=$(wt_input "$(t ts_host)" "127.0.0.1")
+        TS_QPORT=$(wt_input "$(t ts_query_port)" "10011")
+        TS_SPORT=$(wt_input "$(t ts_server_port)" "9987")
+        TS_USER=$(wt_input "$(t ts_username)" "serveradmin")
+        TS_PASS=$(wt_password "$(t ts_password)")
+        BANNER_PORT=$(wt_input "$(t banner_port)" "3200")
 
         cat > "$INSTALL_DIR/config.json" << CONFIGEOF
 {
@@ -436,95 +297,42 @@ configure() {
       "eventText": ""
     }
   },
-  "lang": "$BANNER_LANG",
+  "lang": "$LANG",
   "cacheTTL": 30
 }
 CONFIGEOF
 
-        echo ""
-        send_success "$(t config_saved)"
+        chown "$USER_NAME:$USER_NAME" "$INSTALL_DIR/config.json"
+        chmod 600 "$INSTALL_DIR/config.json"
+
+        # Restart service to pick up new config
+        systemctl restart "$SERVICE_NAME" >> "$LOG_FILE" 2>&1 || true
+
+        wt_msg "$(t config_saved)"
     else
-        cp "$INSTALL_DIR/config.example.json" "$INSTALL_DIR/config.json"
-        send_warn "$(t config_later) ${DIM}nano $INSTALL_DIR/config.json$NORMAL"
+        if [ -f "$INSTALL_DIR/config.example.json" ]; then
+            cp "$INSTALL_DIR/config.example.json" "$INSTALL_DIR/config.json"
+            chown "$USER_NAME:$USER_NAME" "$INSTALL_DIR/config.json"
+            chmod 600 "$INSTALL_DIR/config.json"
+        fi
+        wt_msg "$(t config_skip)"
     fi
-    progress_bar 6 $TOTAL_STEPS
 }
 
-# ── Step 7: Build ──
+# ═══════════════════════════════════════════════════
+#  NGINX DIALOG
+# ═══════════════════════════════════════════════════
 
-build_project() {
-    step_header 7 "$(t step_build)"
-    cd "$INSTALL_DIR"
-
-    send_info "$(t npm_installing)"
-    npm install --omit=dev > /dev/null 2>&1 &
-    spinner $! "npm install..."
-    wait $!
-    send_success "$(t npm_installed)"
-
-    send_info "$(t ts_compiling)"
-    npm install --save-dev typescript > /dev/null 2>&1
-
-    if npx tsc > /dev/null 2>&1; then
-        send_success "$(t ts_compiled)"
-    else
-        send_error "$(t ts_compile_fail) ${BLUE}cd $INSTALL_DIR && npx tsc$NORMAL"
+do_nginx() {
+    if ! command -v nginx &> /dev/null; then
+        wt_msg "$(t nginx_skip)"
+        return
     fi
 
-    npm prune --omit=dev > /dev/null 2>&1 || true
-    progress_bar 7 $TOTAL_STEPS
-}
+    if wt_yesno "$(t nginx_text)"; then
+        NGINX_DOMAIN=$(wt_input "$(t nginx_domain)" "banner.example.com")
 
-# ── Step 8: Service & nginx ──
-
-setup_service() {
-    step_header 8 "$(t step_service)"
-
-    chown -R "$USER_NAME:$USER_NAME" "$INSTALL_DIR"
-    chmod 600 "$INSTALL_DIR/config.json"
-    send_success "$(t perms_set)"
-
-    cat > "/etc/systemd/system/${SERVICE_NAME}.service" << SERVICEEOF
-[Unit]
-Description=TeamSpeak Banner System – Greenbox Studio
-After=network.target
-
-[Service]
-Type=simple
-User=$USER_NAME
-Group=$USER_NAME
-WorkingDirectory=$INSTALL_DIR
-ExecStart=/usr/bin/node dist/server.js
-Restart=always
-RestartSec=5
-Environment=NODE_ENV=production
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=$INSTALL_DIR
-PrivateTmp=true
-
-[Install]
-WantedBy=multi-user.target
-SERVICEEOF
-
-    systemctl daemon-reload
-    systemctl enable "$SERVICE_NAME" > /dev/null 2>&1
-    systemctl start "$SERVICE_NAME" 2>/dev/null || true
-    send_success "$(t service_installed)"
-
-    # nginx (optional)
-    echo ""
-    if command -v nginx &> /dev/null; then
-        send_ask "$(t nginx_ask) ${DIM}($(t yes_no))$NORMAL"
-        read -r do_nginx
-
-        if [[ "$do_nginx" =~ ^[yYjJ]$ ]]; then
-            send_ask "$(t nginx_domain) ${DIM}[banner.example.com]:$NORMAL "
-            read -r NGINX_DOMAIN
-            NGINX_DOMAIN=${NGINX_DOMAIN:-banner.example.com}
-
-            cat > "/etc/nginx/sites-available/ts-banner" << NGINXEOF
+        cat > "/etc/nginx/sites-available/ts-banner" << NGINXEOF
 server {
     listen 80;
     server_name $NGINX_DOMAIN;
@@ -545,7 +353,9 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
     }
 
-    location /health { proxy_pass http://127.0.0.1:$BANNER_PORT; }
+    location /health {
+        proxy_pass http://127.0.0.1:$BANNER_PORT;
+    }
 
     location / {
         proxy_pass http://127.0.0.1:$BANNER_PORT;
@@ -555,75 +365,76 @@ server {
 }
 NGINXEOF
 
-            ln -sf /etc/nginx/sites-available/ts-banner /etc/nginx/sites-enabled/
-            if nginx -t > /dev/null 2>&1; then
-                systemctl reload nginx
-                send_success "$(t nginx_configured): ${BLUE}$NGINX_DOMAIN$NORMAL"
-            else
-                send_warn "$(t nginx_test_fail)"
-            fi
+        ln -sf /etc/nginx/sites-available/ts-banner /etc/nginx/sites-enabled/
+
+        if nginx -t >> "$LOG_FILE" 2>&1; then
+            systemctl reload nginx
+            wt_msg "$(t nginx_done)\n\n$NGINX_DOMAIN"
+        else
+            wt_msg "$(t nginx_fail)"
         fi
-    else
-        send_info "$(t nginx_not_found)"
     fi
-
-    progress_bar 8 $TOTAL_STEPS
 }
 
 # ═══════════════════════════════════════════════════
-#  SUMMARY
+#  DONE DIALOG
 # ═══════════════════════════════════════════════════
 
-show_summary() {
-    echo ""
-    echo ""
-    echo -e "  ${GREEN}╔══════════════════════════════════════════════╗$NORMAL"
-    echo -e "  ${GREEN}║                                              ║$NORMAL"
-    echo -e "  ${GREEN}║   ${WHITE}✓  $(t complete)${GREEN}                    ║$NORMAL"
-    echo -e "  ${GREEN}║      ${DIM}Greenbox Studio – TBS v$VERSION${GREEN}        ║$NORMAL"
-    echo -e "  ${GREEN}║                                              ║$NORMAL"
-    echo -e "  ${GREEN}╚══════════════════════════════════════════════╝$NORMAL"
-    echo ""
-
-    echo -e "  $(t installed_to):  ${BLUE}$INSTALL_DIR$NORMAL"
-    echo -e "  $(t status):       ${GREEN}● active$NORMAL"
-    echo -e "  $(t url):         ${CYAN}http://localhost:${BANNER_PORT}/banner.png$NORMAL"
-
-    if [ -n "$NGINX_DOMAIN" ] && [ "$NGINX_DOMAIN" != "banner.example.com" ]; then
-        echo -e "  nginx:            ${CYAN}http://${NGINX_DOMAIN}/banner.png$NORMAL"
-    fi
-
-    echo ""
-    separator
-    echo ""
-    echo -e "  ${BOLD}$(t commands):$NORMAL"
-    echo ""
-    echo -e "  ${DIM}systemctl status $SERVICE_NAME$NORMAL       Status"
-    echo -e "  ${DIM}journalctl -u $SERVICE_NAME -f$NORMAL       Logs"
-    echo -e "  ${DIM}systemctl restart $SERVICE_NAME$NORMAL      Restart"
-    echo -e "  ${DIM}nano $INSTALL_DIR/config.json$NORMAL   Config"
-    echo ""
-    separator
-    echo ""
-    send_info "$(t update_hint)"
-    echo -e "  ${DIM}bash <(curl -s https://raw.githubusercontent.com/Sekundegibtesnicht/ts3-banner-system/main/install.sh)$NORMAL"
-    echo ""
+do_done() {
+    local done_text
+    done_text=$(t done_text)
+    done_text="${done_text//PORT/$BANNER_PORT}"
+    whiptail --title "$(t done_title)" --msgbox "$done_text" 22 $WT_WIDTH
 }
 
 # ═══════════════════════════════════════════════════
-#  MAIN
+#  ENTRY POINT
 # ═══════════════════════════════════════════════════
 
-clear
-show_header
-select_language
-verify_root
-check_system
-install_git
-install_nodejs
-install_deps
-clone_or_pull
-configure
-build_project
-setup_service
-show_summary
+# Root check (before whiptail is available)
+if [ "$EUID" -ne 0 ]; then
+    echo -e "\033[1;31m✗ Please run as root: sudo ./install.sh\033[0m"
+    exit 1
+fi
+
+# Make sure whiptail is installed
+ensure_whiptail
+
+# Clean log
+> "$LOG_FILE"
+
+# ── Language selection ──
+LANG_CHOICE=$(whiptail --title "$WT_TITLE" --menu \
+    "\nSprache wählen / Select language\n" \
+    12 $WT_WIDTH 2 \
+    "en" "🇬🇧  English" \
+    "de" "🇩🇪  Deutsch" \
+    3>&1 1>&2 2>&3) || true
+
+case "$LANG_CHOICE" in
+    de) LANG="de" ;;
+    *)  LANG="en" ;;
+esac
+
+# ── Welcome screen ──
+wt_msg "$(t welcome_text)"
+
+# ── OS check ──
+if [ ! -f /etc/os-release ]; then
+    wt_msg "$(t os_error)"
+    exit 1
+fi
+
+# ── Run installation with gauge ──
+do_install
+
+# ── Configuration ──
+do_configure
+
+# ── nginx ──
+do_nginx
+
+# ── Done ──
+do_done
+
+exit 0
