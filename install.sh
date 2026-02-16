@@ -53,7 +53,9 @@ DE[nginx_text]="Möchtest du nginx als Reverse Proxy einrichten?"
 DE[nginx_domain]="Deine Domain für das Banner:"
 DE[nginx_done]="nginx wurde konfiguriert für:"
 DE[nginx_fail]="nginx Konfigurationstest fehlgeschlagen.\nBitte manuell prüfen."
-DE[nginx_skip]="nginx ist nicht installiert. Überspringe."
+DE[nginx_skip]="nginx wird übersprungen."
+DE[nginx_installing]="nginx wird installiert..."
+DE[nginx_installed]="nginx wurde installiert."
 DE[done_title]="Installation abgeschlossen!"
 DE[done_text]="\n✓ TBS wurde erfolgreich installiert!\n\nInstalliert in:  $INSTALL_DIR\nBanner URL:      http://localhost:PORT/banner.png\nService:         systemctl status $SERVICE_NAME\n\nNützliche Befehle:\n  systemctl status  $SERVICE_NAME\n  journalctl -u $SERVICE_NAME -f\n  systemctl restart $SERVICE_NAME\n  nano $INSTALL_DIR/config.json\n\nZum Updaten dieses Script erneut ausführen."
 
@@ -87,7 +89,9 @@ EN[nginx_text]="Do you want to set up nginx as a reverse proxy?"
 EN[nginx_domain]="Your domain for the banner:"
 EN[nginx_done]="nginx was configured for:"
 EN[nginx_fail]="nginx config test failed.\nPlease check manually."
-EN[nginx_skip]="nginx is not installed. Skipping."
+EN[nginx_skip]="nginx skipped."
+EN[nginx_installing]="Installing nginx..."
+EN[nginx_installed]="nginx was installed."
 EN[done_title]="Installation Complete!"
 EN[done_text]="\n✓ TBS was installed successfully!\n\nInstalled to:    $INSTALL_DIR\nBanner URL:      http://localhost:PORT/banner.png\nService:         systemctl status $SERVICE_NAME\n\nUseful commands:\n  systemctl status  $SERVICE_NAME\n  journalctl -u $SERVICE_NAME -f\n  systemctl restart $SERVICE_NAME\n  nano $INSTALL_DIR/config.json\n\nTo update, run this script again."
 
@@ -324,12 +328,18 @@ CONFIGEOF
 # ═══════════════════════════════════════════════════
 
 do_nginx() {
-    if ! command -v nginx &> /dev/null; then
-        wt_msg "$(t nginx_skip)"
-        return
-    fi
-
     if wt_yesno "$(t nginx_text)"; then
+        # Install nginx if not present
+        if ! command -v nginx &> /dev/null; then
+            {
+                wt_gauge 0 "$(t nginx_installing)"
+                apt-get update -qq >> "$LOG_FILE" 2>&1
+                apt-get install -y nginx >> "$LOG_FILE" 2>&1
+                wt_gauge 100 "$(t nginx_installed)"
+                sleep 1
+            } | whiptail --title "$WT_TITLE" --gauge "$(t nginx_installing)" 8 $WT_WIDTH 0
+        fi
+
         NGINX_DOMAIN=$(wt_input "$(t nginx_domain)" "banner.example.com")
 
         cat > "/etc/nginx/sites-available/ts-banner" << NGINXEOF
@@ -375,6 +385,7 @@ NGINXEOF
         fi
     fi
 }
+
 
 # ═══════════════════════════════════════════════════
 #  DONE DIALOG
