@@ -50,7 +50,7 @@ DE[config_skip]="config.example.json wurde als config.json kopiert.\nBitte spät
 DE[config_exists]="config.json existiert bereits und wird beibehalten."
 DE[nginx_title]="nginx"
 DE[nginx_text]="Möchtest du nginx als Reverse Proxy einrichten?"
-DE[nginx_domain]="Deine Domain für das Banner:"
+DE[nginx_domain]="Domain oder IP-Adresse für das Banner (z.B. banner.example.com oder 123.45.67.89):"
 DE[nginx_done]="nginx wurde konfiguriert für:"
 DE[nginx_fail]="nginx Konfigurationstest fehlgeschlagen.\nBitte manuell prüfen."
 DE[nginx_skip]="nginx wird übersprungen."
@@ -86,7 +86,7 @@ EN[config_skip]="config.example.json was copied as config.json.\nPlease edit it 
 EN[config_exists]="config.json already exists and will be kept."
 EN[nginx_title]="nginx"
 EN[nginx_text]="Do you want to set up nginx as a reverse proxy?"
-EN[nginx_domain]="Your domain for the banner:"
+EN[nginx_domain]="Domain or IP address for the banner (e.g. banner.example.com or 123.45.67.89):"
 EN[nginx_done]="nginx was configured for:"
 EN[nginx_fail]="nginx config test failed.\nPlease check manually."
 EN[nginx_skip]="nginx skipped."
@@ -340,7 +340,8 @@ do_nginx() {
             } | whiptail --title "$WT_TITLE" --gauge "$(t nginx_installing)" 8 $WT_WIDTH 0
         fi
 
-        NGINX_DOMAIN=$(wt_input "$(t nginx_domain)" "banner.example.com")
+        SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "banner.example.com")
+        NGINX_DOMAIN=$(wt_input "$(t nginx_domain)" "$SERVER_IP")
 
         cat > "/etc/nginx/sites-available/ts-banner" << NGINXEOF
 server {
